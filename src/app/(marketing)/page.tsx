@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Play, Zap, Image, Video, Music, Users, Globe, Sparkles } from "lucide-react";
+import { ArrowRight, Play, Zap, Image, Video, Music, Users, Globe } from "lucide-react";
 
 const btnPrimary = "inline-flex shrink-0 items-center justify-center rounded-lg text-sm font-medium transition-all h-11 gap-2 px-6 text-base bg-violet-600 text-white hover:bg-violet-500 shadow-lg shadow-violet-500/25";
 const btnOutline = "inline-flex shrink-0 items-center justify-center rounded-lg text-sm font-medium transition-all h-11 gap-2 px-6 text-base border border-zinc-700 bg-transparent text-zinc-300 hover:bg-zinc-800 hover:text-white";
@@ -10,10 +10,6 @@ export default function LandingPage() {
       <section className="relative pt-32 pb-20 sm:pt-40 sm:pb-32">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-violet-900/20 via-transparent to-transparent" />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-violet-500/30 bg-violet-500/10 px-4 py-1.5">
-            <Sparkles className="h-3.5 w-3.5 text-violet-400" />
-            <span className="text-sm text-violet-300">AI 2.0 — Now with Agent Mode</span>
-          </div>
           <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl lg:text-7xl">
             Create like a pro.<br />
             <span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
