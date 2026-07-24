@@ -1,64 +1,37 @@
 import { NextResponse } from "next/server";
 import { signToken } from "@/lib/auth/jwt";
 
-const BASE_URL = "https://deepseekaiagent.com";
-const REDIRECT_URI = `${BASE_URL}/api/auth/google/callback`;
+const GOOGLE_CLIENT_ID = "43452014125-8t1s71o8ngsv17ugpabsnrcmd5d9gkhf.apps.googleusercontent.com";
 
-export async function GET(request: Request) {
+export async function POST(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const code = searchParams.get("code");
-    const error = searchParams.get("error");
-
-    if (error || !code) {
-      return NextResponse.redirect(new URL("/login?error=google_denied", BASE_URL));
+    const { credential } = (await request.json()) as { credential: string };
+    if (!credential) {
+      return NextResponse.json({ error: "No credential" }, { status: 400 });
     }
 
-    const clientId = process.env.GOOGLE_CLIENT_ID;
-    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    if (!clientId || !clientSecret) {
-      return NextResponse.redirect(new URL("/login?error=google_not_configured", BASE_URL));
+    // Verify the ID token with Google's public keys — no client_secret needed
+    const verifyRes = await fetch(
+      `https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`
+    );
+
+    if (!verifyRes.ok) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
-    // Exchange code for tokens
-    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        code,
-        client_id: clientId,
-        client_secret: clientSecret,
-        redirect_uri: REDIRECT_URI,
-        grant_type: "authorization_code",
-      }),
-    });
-
-    if (!tokenRes.ok) {
-      const errText = await tokenRes.text();
-      console.error("Google token exchange failed:", errText);
-      // Show the actual error in the URL so we can debug
-      const errData = JSON.parse(errText);
-      const detail = errData?.error_description ?? errData?.error ?? "unknown";
-      return NextResponse.redirect(new URL(`/login?error=google_failed&detail=${encodeURIComponent(detail)}`, BASE_URL));
-    }
-
-    const tokens = (await tokenRes.json()) as { access_token: string };
-
-    // Get user info
-    const userRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
-      headers: { Authorization: `Bearer ${tokens.access_token}` },
-    });
-    const googleUser = (await userRes.json()) as {
-      email: string; name: string; picture: string; id: string;
+    const googleUser = (await verifyRes.json()) as {
+      sub: string; email: string; name: string; picture: string;
+      aud: string;
     };
 
-    if (!googleUser.email) {
-      return NextResponse.redirect(new URL("/login?error=google_no_email", BASE_URL));
+    // Verify the token is for our app
+    if (googleUser.aud !== GOOGLE_CLIENT_ID) {
+      return NextResponse.json({ error: "Wrong audience" }, { status: 401 });
     }
 
-    // Sign JWT and set cookies
+    // Sign JWT
     const token = await signToken({
-      userId: `google-${googleUser.id}`,
+      userId: `google-${googleUser.sub}`,
       email: googleUser.email,
     });
 
@@ -68,7 +41,7 @@ export async function GET(request: Request) {
       picture: googleUser.picture,
     })).toString("base64");
 
-    const res = NextResponse.redirect(new URL("/agent", BASE_URL));
+    const res = NextResponse.json({ success: true, email: googleUser.email, name: googleUser.name });
     res.cookies.set("token", token, {
       httpOnly: true, secure: true, sameSite: "lax",
       maxAge: 60 * 60 * 24 * 7, path: "/",
@@ -81,6 +54,6 @@ export async function GET(request: Request) {
     return res;
   } catch (err) {
     console.error("Google callback error:", err);
-    return NextResponse.redirect(new URL("/login?error=google_error", BASE_URL));
+    return NextResponse.json({ error: "Verification failed" }, { status: 500 });
   }
 }
