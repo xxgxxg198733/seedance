@@ -129,8 +129,9 @@ export async function POST(request: Request) {
 
     const lastUserMsg = [...messages].reverse().find((m) => m.role === "user");
     const referenceImage = lastUserMsg?.images?.[0];
+    const origin = request.headers.get("origin") ?? "https://deepseekaiagent.com";
     const refUrl = referenceImage
-      ? (referenceImage.startsWith("http") ? referenceImage : `https://seedance.ai${referenceImage}`)
+      ? (referenceImage.startsWith("http") ? referenceImage : `${origin}${referenceImage}`)
       : undefined;
 
     const llmMessages = messages.map((m) => {

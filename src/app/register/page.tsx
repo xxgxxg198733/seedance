@@ -24,7 +24,8 @@ export default function RegisterPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      window.location.href = "/agent";
+      const params = new URLSearchParams(window.location.search);
+      window.location.href = params.get("redirect") ?? "/agent";
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
     } finally {

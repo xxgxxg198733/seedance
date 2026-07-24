@@ -155,7 +155,7 @@ export default function PricingPage() {
           </p>
           <div className="mt-4 flex justify-center gap-4">
             {creditPacks.map((pack) => (
-              <button key={pack.credits} onClick={() => handleSubscribe("PRO")}
+              <button key={pack.credits} onClick={() => handleSubscribe("ADVANCED")}
                 disabled={paypalLoading !== null}
                 className="flex items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-900/50 px-6 py-4 hover:border-violet-500/30 transition-all disabled:opacity-50">
                 <span className="text-lg font-bold text-white">{pack.credits} Credits</span>
