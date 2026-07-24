@@ -12,14 +12,28 @@ export async function GET() {
     const payload = await verifyToken(token);
     if (!payload) return NextResponse.json({ user: null }, { status: 401 });
 
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
-      select: { id: true, email: true, name: true, credits: true, plan: true },
-    });
+    // Try DB first, fallback to JWT payload (for Google OAuth)
+    try {
+      const dbUser = await prisma.user.findUnique({
+        where: { id: payload.userId },
+        select: { id: true, email: true, name: true, credits: true, plan: true },
+      });
+      if (dbUser) return NextResponse.json({ user: dbUser });
+    } catch {
+      // DB not available — use JWT payload
+    }
 
-    return NextResponse.json({ user });
-  } catch (err) {
-    console.error("Me error:", err);
+    // Google OAuth: construct user from JWT
+    return NextResponse.json({
+      user: {
+        id: payload.userId,
+        email: payload.email,
+        name: payload.email?.split("@")[0] ?? "User",
+        credits: 20,
+        plan: "FREE",
+      },
+    });
+  } catch {
     return NextResponse.json({ user: null }, { status: 500 });
   }
 }

@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db/prisma";
 import { signToken } from "@/lib/auth/jwt";
 
 export async function GET(request: Request) {
@@ -9,13 +8,16 @@ export async function GET(request: Request) {
     const error = searchParams.get("error");
 
     if (error || !code) {
-      const redirect = searchParams.get("state") ?? "/agent";
-      return NextResponse.redirect(new URL(`/login?error=google_denied`, request.url));
+      return NextResponse.redirect(new URL("/login?error=google_denied", request.url));
     }
 
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    const origin = process.env.NEXT_PUBLIC_APP_URL ?? "https://deepseekaiagent.com";
+    if (!clientId || !clientSecret) {
+      return NextResponse.redirect(new URL("/login?error=google_not_configured", request.url));
+    }
+
+    const origin = `${request.headers.get("x-forwarded-proto") ?? "https"}://${request.headers.get("host") ?? "deepseekaiagent.com"}`;
     const redirectUri = `${origin}/api/auth/google/callback`;
 
     // Exchange code for tokens
@@ -24,8 +26,8 @@ export async function GET(request: Request) {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         code,
-        client_id: clientId!,
-        client_secret: clientSecret!,
+        client_id: clientId,
+        client_secret: clientSecret,
         redirect_uri: redirectUri,
         grant_type: "authorization_code",
       }),
@@ -36,7 +38,7 @@ export async function GET(request: Request) {
       return NextResponse.redirect(new URL("/login?error=google_failed", request.url));
     }
 
-    const tokens = (await tokenRes.json()) as { access_token: string; id_token: string };
+    const tokens = (await tokenRes.json()) as { access_token: string };
 
     // Get user info
     const userRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
@@ -50,28 +52,30 @@ export async function GET(request: Request) {
       return NextResponse.redirect(new URL("/login?error=google_no_email", request.url));
     }
 
-    // Find or create user
-    let user = await prisma.user.findUnique({ where: { email: googleUser.email } });
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          clerkId: `google-${googleUser.id}`,
-          email: googleUser.email,
-          name: googleUser.name,
-          avatarUrl: googleUser.picture,
-          password: null, // Google OAuth users have no password
-        },
-      });
-    }
+    // Sign JWT with Google user info — no DB needed
+    const token = await signToken({
+      userId: `google-${googleUser.id}`,
+      email: googleUser.email,
+    });
 
-    // Sign JWT and redirect
-    const token = await signToken({ userId: user.id, email: user.email });
-    const redirect = searchParams.get("state") ?? "/agent";
-    const res = NextResponse.redirect(new URL(redirect, request.url));
+    // Also include user display info in a readable cookie
+    const userInfo = Buffer.from(JSON.stringify({
+      name: googleUser.name,
+      email: googleUser.email,
+      picture: googleUser.picture,
+    })).toString("base64");
 
+    const res = NextResponse.redirect(new URL("/agent", request.url));
     res.cookies.set("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7,
+      path: "/",
+    });
+    res.cookies.set("user_info", userInfo, {
+      httpOnly: false,
+      secure: true,
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 7,
       path: "/",
