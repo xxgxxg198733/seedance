@@ -33,7 +33,7 @@ export async function POST(request: Request) {
         const amount = event.resource.purchase_units?.[0]?.amount?.value;
         if (amount) {
           // Add credits based on captured amount
-          const creditsByAmount: Record<string, number> = { "20": 200, "25": 600, "119": 3000 };
+          const creditsByAmount: Record<string, number> = { "19.9": 36000, "34.9": 66000, "62.9": 156000, "50": 5000, "100": 14000 };
           const credits = creditsByAmount[amount] ?? Math.floor(Number(amount) * 20);
 
           const user = await prisma.user.findFirst();

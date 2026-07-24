@@ -22,9 +22,10 @@ async function getPayPalToken(): Promise<string> {
 }
 
 export const PAYPAL_PLANS: Record<string, { name: string; amount: number; credits: number }> = {
-  LITE: { name: "Lite Plan", amount: 20, credits: 200 },
-  PRO: { name: "Pro Plan", amount: 25, credits: 600 },
-  PREMIUM: { name: "Premium Plan", amount: 119, credits: 3000 },
+  STARTER: { name: "Starter Plan", amount: 19.9, credits: 36000 },
+  PREMIUM: { name: "Premium Plan", amount: 34.9, credits: 66000 },
+  ADVANCED: { name: "Advanced Plan", amount: 62.9, credits: 156000 },
+  PRO: { name: "Pro Plan (Legacy)", amount: 25, credits: 600 },
 };
 
 // Create a PayPal subscription order
