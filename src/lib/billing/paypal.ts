@@ -29,7 +29,7 @@ export const PAYPAL_PLANS: Record<string, { name: string; amount: number; credit
 };
 
 // Create a PayPal subscription order
-export async function createPayPalOrder(plan: keyof typeof PAYPAL_PLANS) {
+export async function createPayPalOrder(plan: keyof typeof PAYPAL_PLANS, baseUrl: string) {
   const token = await getPayPalToken();
   const { name, amount } = PAYPAL_PLANS[plan];
 
@@ -51,8 +51,8 @@ export async function createPayPalOrder(plan: keyof typeof PAYPAL_PLANS) {
         brand_name: "Seedance",
         landing_page: "LOGIN",
         user_action: "PAY_NOW",
-        return_url: `${process.env.NEXT_PUBLIC_APP_URL}/settings?paypal=success`,
-        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing?paypal=cancelled`,
+        return_url: `${baseUrl}/settings?paypal=success`,
+        cancel_url: `${baseUrl}/pricing?paypal=cancelled`,
       },
     }),
   });
