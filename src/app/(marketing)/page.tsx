@@ -75,23 +75,6 @@ export default function LandingPage() {
 
       <section className="py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h2 className="mb-12 text-center text-3xl font-bold text-white">How it works</h2>
-          <div className="grid gap-8 sm:grid-cols-3">
-            {[
-              { step: "1", title: "Describe", desc: "Tell the Agent what you want to create in natural language." },
-              { step: "2", title: "Generate", desc: "AI selects the best model and creates your content in seconds." },
-              { step: "3", title: "Refine", desc: "Iterate with the Agent until it's perfect. Download & share." },
-            ].map((item) => (
-              <div key={item.step} className="text-center">
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-violet-600/20 text-lg font-bold text-violet-400">{item.step}</div>
-                <h3 className="mb-2 font-semibold text-white">{item.title}</h3>
-                <p className="text-sm text-zinc-500">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <section className="py-20">
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
           <div className="rounded-3xl border border-violet-500/20 bg-gradient-to-br from-violet-950/50 to-purple-950/50 p-12">
