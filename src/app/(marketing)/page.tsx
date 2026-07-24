@@ -74,8 +74,6 @@ export default function LandingPage() {
       </section>
 
       <section className="py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-      <section className="py-20">
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
           <div className="rounded-3xl border border-violet-500/20 bg-gradient-to-br from-violet-950/50 to-purple-950/50 p-12">
             <h2 className="text-3xl font-bold text-white sm:text-4xl">Ready to create?</h2>
