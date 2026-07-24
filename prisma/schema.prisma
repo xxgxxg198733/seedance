@@ -1,0 +1,172 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Plan {
+  FREE
+  LITE
+  PRO
+  PREMIUM
+}
+
+enum GenerationType {
+  VIDEO
+  IMAGE
+  AUDIO
+  AVATAR
+}
+
+enum GenStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum AssetType {
+  IMAGE
+  VIDEO
+  AUDIO
+  OTHER
+}
+
+model User {
+  id               String         @id @default(cuid())
+  clerkId          String         @unique
+  password         String?
+  email            String         @unique
+  name             String?
+  avatarUrl        String?
+  credits          Int            @default(20)
+  plan             Plan           @default(FREE)
+  stripeCustomerId String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  generations      Generation[]
+  assets           Asset[]
+  projects         Project[]
+  creditLogs       CreditLog[]
+  subscription     Subscription?
+  conversations    AgentConversation[]
+}
+
+model Subscription {
+  id                 String    @id @default(cuid())
+  userId             String    @unique
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripeSubId        String    @unique
+  stripePriceId      String
+  status             String
+  plan               Plan
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  createdAt          DateTime  @default(now())
+}
+
+model CreditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Int
+  type      String
+  reference String?
+  balance   Int
+  createdAt DateTime @default(now())
+}
+
+model Generation {
+  id          String         @id @default(cuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        GenerationType
+  modelId     String
+  status      GenStatus      @default(PENDING)
+  input       Json
+  output      Json?
+  creditCost  Int
+  projectId   String?
+  project     Project?       @relation(fields: [projectId], references: [id])
+  assetId     String?
+  asset       Asset?         @relation(fields: [assetId], references: [id])
+  error       String?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime       @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model Asset {
+  id           String       @id @default(cuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type         AssetType
+  name         String
+  url          String
+  thumbnailUrl String?
+  size         Int?
+  width        Int?
+  height       Int?
+  duration     Float?
+  mimeType     String
+  folderId     String?
+  folder       Folder?      @relation(fields: [folderId], references: [id])
+  metadata     Json?
+  isPublic     Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  generations  Generation[]
+
+  @@index([userId, createdAt])
+  @@index([userId, folderId])
+}
+
+model Folder {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  parentId  String?
+  parent    Folder?  @relation("FolderTree", fields: [parentId], references: [id])
+  children  Folder[] @relation("FolderTree")
+  assets    Asset[]
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Project {
+  id           String       @id @default(cuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  data         Json
+  thumbnailUrl String?
+  status       String       @default("draft")
+  exportUrl    String?
+  duration     Float?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  generations  Generation[]
+
+  @@index([userId, updatedAt])
+}
+
+model AgentConversation {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String?
+  messages  Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, updatedAt])
+}
