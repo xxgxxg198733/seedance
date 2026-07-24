@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Loader2, Gift } from "lucide-react";
-import { canUseApplePay, createApplePayRequest, processApplePayPayment } from "@/lib/billing/apple-pay";
 
 const monthlyPlans = [
   {
@@ -40,31 +39,11 @@ export default function PricingPage() {
   const router = useRouter();
   const [annual, setAnnual] = useState(true);
   const [paypalLoading, setPaypalLoading] = useState<string | null>(null);
-  const [applePayLoading, setApplePayLoading] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
-  const [showApplePay, setShowApplePay] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me").then(r => r.json()).then(d => setLoggedIn(!!d.user)).catch(() => {});
-    setShowApplePay(canUseApplePay());
   }, []);
-
-  const handleApplePay = async () => {
-    if (!loggedIn) { router.push("/login?redirect=/pricing"); return; }
-    const plan = { name: "Pro Plan", amount: 34.9 };
-    const request = createApplePayRequest(plan);
-    if (!request) { alert("Apple Pay not available"); return; }
-
-    setApplePayLoading(true);
-    try {
-      const response = await request.show();
-      await processApplePayPayment(response, "PRO");
-    } catch (err: any) {
-      if (err?.name !== "AbortError") alert("Payment cancelled or failed");
-    } finally {
-      setApplePayLoading(false);
-    }
-  };
 
   const plans = annual ? monthlyPlans : monthlyPlans.map(p => ({
     ...p, price: Math.round(p.price * 12 * 0.7) / 12, originalPrice: p.price,
@@ -168,18 +147,6 @@ export default function PricingPage() {
             </div>
           ))}
         </div>
-
-        {/* Apple Pay */}
-        {showApplePay && (
-          <div className="mt-12 flex justify-center">
-            <button onClick={handleApplePay} disabled={applePayLoading}
-              className="flex items-center gap-3 rounded-2xl bg-black px-8 py-4 text-white hover:bg-zinc-900 transition-colors disabled:opacity-50 border border-zinc-700">
-              {applePayLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : (
-                <svg className="h-8 w-auto" viewBox="0 0 40 16" fill="none"><path d="M11.5 1C10.1 1 9 2.1 9 3.5S10.1 6 11.5 6 14 4.9 14 3.5 12.9 1 11.5 1ZM4.4 1C3.4 1 2.5 1.4 1.9 2L7.3 5.5C7.6 5.2 7.7 4.8 7.7 4.3 7.7 2.5 6.2 1 4.4 1ZM0 4.2V15h1.5V9.4l3.7 5.6h1.3V4.2H5v5.4L1.4 4.2H0ZM9.3 4.2v1.4h2.5v6.9h1.5V5.6h2.5V4.2H9.3ZM22.1 4.2c-1.2 0-2.1.7-2.4 1.8h-.1V4.2h-1.4V15h1.5v-3.9c0-1.5.8-2.5 2.1-2.5s1.8.9 1.8 2.4V15H25v-4.3c0-2-1.3-3.5-2.9-3.5ZM32 4.2c-1.3 0-2.2.7-2.5 1.8h-.1l-.1-1.6h-1.3v7.8c0 2.2 1.5 3.7 3.8 3.7 1 0 2-.3 2.9-.9l-.7-1.2c-.6.4-1.3.7-2.1.7-1.4 0-2.3-.9-2.4-2.3v-.4h5.3v-1c0-2.7-1.5-4.6-3.8-4.6ZM30.7 8.8c.1-1.2.9-2.2 2.2-2.2 1.4 0 2.2 1 2.3 2.2h-4.5ZM36.8 4.2V15h1.5V4.2h-1.5Z" fill="white"/></svg>
-              )}
-            </button>
-          </div>
-        )}
 
         {/* Credit Packs */}
         <div className="mt-12 text-center">
