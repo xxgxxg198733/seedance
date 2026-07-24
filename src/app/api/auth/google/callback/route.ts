@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { signToken } from "@/lib/auth/jwt";
 
+const BASE_URL = "https://deepseekaiagent.com";
+const REDIRECT_URI = `${BASE_URL}/api/auth/google/callback`;
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -8,17 +11,14 @@ export async function GET(request: Request) {
     const error = searchParams.get("error");
 
     if (error || !code) {
-      return NextResponse.redirect(new URL("/login?error=google_denied", request.url));
+      return NextResponse.redirect(new URL("/login?error=google_denied", BASE_URL));
     }
 
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
     if (!clientId || !clientSecret) {
-      return NextResponse.redirect(new URL("/login?error=google_not_configured", request.url));
+      return NextResponse.redirect(new URL("/login?error=google_not_configured", BASE_URL));
     }
-
-    const origin = `${request.headers.get("x-forwarded-proto") ?? "https"}://${request.headers.get("host") ?? "deepseekaiagent.com"}`;
-    const redirectUri = `${origin}/api/auth/google/callback`;
 
     // Exchange code for tokens
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
@@ -28,14 +28,15 @@ export async function GET(request: Request) {
         code,
         client_id: clientId,
         client_secret: clientSecret,
-        redirect_uri: redirectUri,
+        redirect_uri: REDIRECT_URI,
         grant_type: "authorization_code",
       }),
     });
 
     if (!tokenRes.ok) {
-      console.error("Google token exchange failed:", await tokenRes.text());
-      return NextResponse.redirect(new URL("/login?error=google_failed", request.url));
+      const errText = await tokenRes.text();
+      console.error("Google token exchange failed:", errText);
+      return NextResponse.redirect(new URL("/login?error=google_failed", BASE_URL));
     }
 
     const tokens = (await tokenRes.json()) as { access_token: string };
@@ -49,41 +50,34 @@ export async function GET(request: Request) {
     };
 
     if (!googleUser.email) {
-      return NextResponse.redirect(new URL("/login?error=google_no_email", request.url));
+      return NextResponse.redirect(new URL("/login?error=google_no_email", BASE_URL));
     }
 
-    // Sign JWT with Google user info — no DB needed
+    // Sign JWT and set cookies
     const token = await signToken({
       userId: `google-${googleUser.id}`,
       email: googleUser.email,
     });
 
-    // Also include user display info in a readable cookie
     const userInfo = Buffer.from(JSON.stringify({
       name: googleUser.name,
       email: googleUser.email,
       picture: googleUser.picture,
     })).toString("base64");
 
-    const res = NextResponse.redirect(new URL("/agent", request.url));
+    const res = NextResponse.redirect(new URL("/agent", BASE_URL));
     res.cookies.set("token", token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7,
-      path: "/",
+      httpOnly: true, secure: true, sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7, path: "/",
     });
     res.cookies.set("user_info", userInfo, {
-      httpOnly: false,
-      secure: true,
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7,
-      path: "/",
+      httpOnly: false, secure: true, sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7, path: "/",
     });
 
     return res;
   } catch (err) {
     console.error("Google callback error:", err);
-    return NextResponse.redirect(new URL("/login?error=google_error", "https://deepseekaiagent.com"));
+    return NextResponse.redirect(new URL("/login?error=google_error", BASE_URL));
   }
 }

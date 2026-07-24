@@ -6,8 +6,7 @@ export async function GET() {
     return NextResponse.json({ error: "Google OAuth not configured" }, { status: 500 });
   }
 
-  const origin = process.env.NEXT_PUBLIC_APP_URL ?? "https://deepseekaiagent.com";
-  const redirectUri = `${origin}/api/auth/google/callback`;
+  const redirectUri = "https://deepseekaiagent.com/api/auth/google/callback";
 
   const params = new URLSearchParams({
     client_id: clientId,
