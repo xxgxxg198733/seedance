@@ -37,7 +37,7 @@ export async function POST(request: Request) {
       maxAge: 604800, path: "/",
     });
     return res;
-  } catch {
-    return NextResponse.json({ error: "Login failed" }, { status: 500 });
+  } catch (err) {
+    return NextResponse.json({ error: `Login failed: ${err instanceof Error ? err.message : String(err)}` }, { status: 500 });
   }
 }
