@@ -1,59 +1,58 @@
 import { NextResponse } from "next/server";
 import { signToken } from "@/lib/auth/jwt";
 
-const GOOGLE_CLIENT_ID = "43452014125-8t1s71o8ngsv17ugpabsnrcmd5d9gkhf.apps.googleusercontent.com";
+const CLIENT_ID = "43452014125-06hrfv4un6sdfatc9bs9es3karg05rq2.apps.googleusercontent.com";
+const REDIRECT_URI = "https://deepseekaiagent.com/api/auth/google/callback";
 
-export async function POST(request: Request) {
+export async function GET(request: Request) {
   try {
-    const { credential } = (await request.json()) as { credential: string };
-    if (!credential) {
-      return NextResponse.json({ error: "No credential" }, { status: 400 });
+    const { searchParams } = new URL(request.url);
+    const code = searchParams.get("code");
+
+    if (!code) {
+      return NextResponse.redirect(new URL("/login?error=no_code", request.url));
     }
 
-    // Verify the ID token with Google's public keys — no client_secret needed
-    const verifyRes = await fetch(
-      `https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`
-    );
+    // Exchange code for tokens
+    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        code,
+        client_id: CLIENT_ID,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+        redirect_uri: REDIRECT_URI,
+        grant_type: "authorization_code",
+      }),
+    });
 
-    if (!verifyRes.ok) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    if (!tokenRes.ok) {
+      const err = await tokenRes.text();
+      console.error("Google token error:", err);
+      return NextResponse.redirect(new URL("/login?error=google_failed", request.url));
     }
 
-    const googleUser = (await verifyRes.json()) as {
-      sub: string; email: string; name: string; picture: string;
-      aud: string;
-    };
+    const tokens = (await tokenRes.json()) as { access_token: string };
 
-    // Verify the token is for our app
-    if (googleUser.aud !== GOOGLE_CLIENT_ID) {
-      return NextResponse.json({ error: "Wrong audience" }, { status: 401 });
+    // Get user info
+    const userRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+      headers: { Authorization: `Bearer ${tokens.access_token}` },
+    });
+    const gu = (await userRes.json()) as { email: string; name: string; picture: string; id: string };
+
+    if (!gu.email) {
+      return NextResponse.redirect(new URL("/login?error=no_email", request.url));
     }
 
-    // Sign JWT
-    const token = await signToken({
-      userId: `google-${googleUser.sub}`,
-      email: googleUser.email,
-    });
+    const token = await signToken({ userId: `google-${gu.id}`, email: gu.email });
+    const userInfo = Buffer.from(JSON.stringify({ name: gu.name, email: gu.email, picture: gu.picture })).toString("base64");
 
-    const userInfo = Buffer.from(JSON.stringify({
-      name: googleUser.name,
-      email: googleUser.email,
-      picture: googleUser.picture,
-    })).toString("base64");
-
-    const res = NextResponse.json({ success: true, email: googleUser.email, name: googleUser.name });
-    res.cookies.set("token", token, {
-      httpOnly: true, secure: true, sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, path: "/",
-    });
-    res.cookies.set("user_info", userInfo, {
-      httpOnly: false, secure: true, sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, path: "/",
-    });
-
+    const res = NextResponse.redirect(new URL("/agent", request.url));
+    res.cookies.set("token", token, { httpOnly: true, secure: true, sameSite: "lax", maxAge: 604800, path: "/" });
+    res.cookies.set("user_info", userInfo, { httpOnly: false, secure: true, sameSite: "lax", maxAge: 604800, path: "/" });
     return res;
   } catch (err) {
-    console.error("Google callback error:", err);
-    return NextResponse.json({ error: "Verification failed" }, { status: 500 });
+    console.error("Google callback:", err);
+    return NextResponse.redirect(new URL("/login?error=google_error", request.url));
   }
 }

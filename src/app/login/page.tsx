@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 
-const GOOGLE_CLIENT_ID = "43452014125-8t1s71o8ngsv17ugpabsnrcmd5d9gkhf.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = "43452014125-06hrfv4un6sdfatc9bs9es3karg05rq2.apps.googleusercontent.com";
 
 declare global {
   interface Window {
