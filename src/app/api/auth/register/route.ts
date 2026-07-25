@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import { hash } from "bcryptjs";
-import { prisma } from "@/lib/db/prisma";
 import { signToken } from "@/lib/auth/jwt";
 
 export async function POST(request: Request) {
@@ -9,36 +7,31 @@ export async function POST(request: Request) {
       email: string; password: string; name?: string;
     };
 
-    if (!email || !password) return NextResponse.json({ error: "Email and password required" }, { status: 400 });
-    if (password.length < 6) return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
+    if (!email || !password) {
+      return NextResponse.json({ error: "Email and password required" }, { status: 400 });
+    }
+    if (password.length < 6) {
+      return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
+    }
 
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) return NextResponse.json({ error: "Email already registered" }, { status: 409 });
+    const token = await signToken({ userId: `email-${email}`, email });
 
-    const hashed = await hash(password, 10);
-    const user = await prisma.user.create({
-      data: {
-        clerkId: crypto.randomUUID(),
-        email,
-        password: hashed,
-        name: name ?? email.split("@")[0],
-      },
-    });
+    const userInfo = Buffer.from(JSON.stringify({
+      name: name ?? email.split("@")[0],
+      email,
+    })).toString("base64");
 
-    const token = await signToken({ userId: user.id, email: user.email });
-    const isProd = process.env.NODE_ENV === "production";
-
-    const res = NextResponse.json({ id: user.id, email: user.email, name: user.name, credits: user.credits, plan: user.plan });
+    const res = NextResponse.json({ success: true, email, name });
     res.cookies.set("token", token, {
-      httpOnly: true,
-      secure: isProd,
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7,
-      path: "/",
+      httpOnly: true, secure: true, sameSite: "lax",
+      maxAge: 604800, path: "/",
+    });
+    res.cookies.set("user_info", userInfo, {
+      httpOnly: false, secure: true, sameSite: "lax",
+      maxAge: 604800, path: "/",
     });
     return res;
-  } catch (err) {
-    console.error("Register error:", err);
+  } catch {
     return NextResponse.json({ error: "Registration failed" }, { status: 500 });
   }
 }
