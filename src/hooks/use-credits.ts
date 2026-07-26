@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
 export function useCredits() {
   const [credits, setCredits] = useState(20); // Default free trial
@@ -18,6 +18,11 @@ export function useCredits() {
       // Use defaults
     }
   }, []);
+
+  // Auto-fetch on mount
+  useEffect(() => {
+    fetchCredits();
+  }, [fetchCredits]);
 
   const deductCredits = useCallback((amount: number) => {
     setCredits((c) => c - amount);

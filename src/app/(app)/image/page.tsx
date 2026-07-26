@@ -2,8 +2,10 @@
 
 import { useState, useRef } from "react";
 import { ImageIcon, Sparkles, Clock, X, Upload } from "lucide-react";
+import { useCredits } from "@/hooks/use-credits";
 
 export default function ImagePage() {
+  const { fetchCredits } = useCredits();
   const [prompt, setPrompt] = useState("");
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [resolution, setResolution] = useState("2K");
@@ -46,6 +48,7 @@ export default function ImagePage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Generation failed");
       setResult(data.output?.url);
+      if (data.credits_remaining !== undefined) fetchCredits();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {

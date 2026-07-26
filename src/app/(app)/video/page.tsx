@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { Video, Sparkles, Clock, Monitor, Timer, Upload, X, Image, Plus } from "lucide-react";
+import { useCredits } from "@/hooks/use-credits";
 
 const MODES = [
   { id: "text-to-video", label: "Text to Video", desc: "Describe your video" },
@@ -10,6 +11,7 @@ const MODES = [
 ];
 
 export default function VideoPage() {
+  const { fetchCredits } = useCredits();
   const [mode, setMode] = useState("text-to-video");
   const [prompt, setPrompt] = useState("");
   const [aspectRatio, setAspectRatio] = useState("16:9");
@@ -73,6 +75,7 @@ export default function VideoPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Generation failed");
       setResult(data.output?.url);
+      if (data.credits_remaining !== undefined) fetchCredits();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
