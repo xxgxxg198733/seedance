@@ -5,7 +5,7 @@ export const APP_DESCRIPTION =
 export const CREDITS = {
   FREE_TRIAL: 20,
   PLANS: {
-    STARTER: { credits: 36000, price: 19.9, resolution: "1080P" },
+    STARTER: { credits: 36000, price: 20.1, resolution: "1080P" },
     PREMIUM: { credits: 66000, price: 34.9, resolution: "1080P" },
     ADVANCED: { credits: 156000, price: 62.9, resolution: "1080P" },
   },

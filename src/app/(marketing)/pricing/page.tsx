@@ -6,7 +6,7 @@ import { Check, Loader2, Gift } from "lucide-react";
 
 const monthlyPlans = [
   {
-    key: "STARTER" as const, name: "Starter", price: 19.9, originalPrice: 28.4,
+    key: "STARTER" as const, name: "Starter", price: 20.1, originalPrice: 28.4,
     credits: "36,000 credits/yr", videoCount: "276 videos", imageCount: "7,200 images",
     desc: "For individual creators getting started", popular: false,
   },
