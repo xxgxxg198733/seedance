@@ -69,7 +69,7 @@ export default function PricingPage() {
               <div className="mt-4">
                 <span className="text-4xl font-bold text-white">${plan.price}</span>
                 <span className="text-zinc-500">/mo</span>
-                {annual && plan.originalPrice && (
+                {plan.originalPrice && (
                   <span className="ml-2 text-sm text-zinc-500 line-through">${plan.originalPrice}/mo</span>
                 )}
               </div>
