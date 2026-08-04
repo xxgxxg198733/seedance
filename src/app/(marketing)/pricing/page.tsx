@@ -38,7 +38,6 @@ const sharedFeatures = [
 
 export default function PricingPage() {
   const router = useRouter();
-  const [annual, setAnnual] = useState(true);
   const [loggedIn, setLoggedIn] = useState(false);
   const [successPlan, setSuccessPlan] = useState<string | null>(null);
 
@@ -46,9 +45,7 @@ export default function PricingPage() {
     fetch("/api/auth/me").then(r => r.json()).then(d => setLoggedIn(!!d.user)).catch(() => {});
   }, []);
 
-  const plans = annual ? monthlyPlans : monthlyPlans.map(p => ({
-    ...p, price: Math.round(p.price * 12 * 0.7) / 12, originalPrice: p.price,
-  }));
+  const plans = monthlyPlans;
 
   return (
     <div className="pt-24 pb-20">
@@ -56,20 +53,6 @@ export default function PricingPage() {
         <div className="text-center">
           <h1 className="text-4xl font-bold text-white sm:text-5xl">Simple, transparent pricing</h1>
           <p className="mt-4 text-lg text-zinc-400">Choose the plan that fits your creative needs.</p>
-        </div>
-
-        {/* Annual/Monthly toggle */}
-        <div className="mt-10 flex justify-center">
-          <div className="inline-flex rounded-xl bg-zinc-900 p-1">
-            <button onClick={() => setAnnual(true)}
-              className={`flex items-center gap-1.5 rounded-lg px-5 py-2 text-sm font-medium transition-all ${annual ? "bg-violet-600 text-white" : "text-zinc-400 hover:text-white"}`}>
-              🔥 Annually <span className="text-xs opacity-80">(30% Off)</span>
-            </button>
-            <button onClick={() => setAnnual(false)}
-              className={`rounded-lg px-5 py-2 text-sm font-medium transition-all ${!annual ? "bg-violet-600 text-white" : "text-zinc-400 hover:text-white"}`}>
-              Monthly
-            </button>
-          </div>
         </div>
 
         {/* Plans */}
