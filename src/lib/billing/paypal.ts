@@ -28,10 +28,39 @@ export const PAYPAL_PLANS: Record<string, { name: string; amount: number; credit
   PRO: { name: "Pro Plan (Legacy)", amount: 25, credits: 600 },
 };
 
-// Create a PayPal subscription order
-export async function createPayPalOrder(plan: keyof typeof PAYPAL_PLANS, baseUrl: string) {
+// Create a PayPal order
+export async function createPayPalOrder(
+  plan: keyof typeof PAYPAL_PLANS,
+  baseUrl: string,
+  method: "paypal" | "card" = "paypal"
+) {
   const token = await getPayPalToken();
   const { name, amount } = PAYPAL_PLANS[plan];
+
+  const purchaseUnit = {
+    reference_id: crypto.randomUUID(),
+    description: `${name} — Annual Subscription`,
+    amount: { currency_code: "USD", value: String(amount) },
+  };
+
+  const experienceContext = {
+    brand_name: "Seedance",
+    landing_page: "BILLING" as const,
+    user_action: "PAY_NOW" as const,
+    return_url: `${baseUrl}/settings?paypal=success`,
+    cancel_url: `${baseUrl}/pricing?paypal=cancelled`,
+  };
+
+  // Use payment_source for better payment method control
+  // card: direct credit/debit card without PayPal account
+  // paypal: PayPal wallet (also shows card option when Account Optional is ON)
+  const body: Record<string, unknown> = {
+    intent: "CAPTURE",
+    purchase_units: [purchaseUnit],
+    payment_source: method === "card"
+      ? { card: { experience_context: experienceContext } }
+      : { paypal: { experience_context: experienceContext } },
+  };
 
   const res = await fetch(`${PAYPAL_API}/v2/checkout/orders`, {
     method: "POST",
@@ -40,21 +69,7 @@ export async function createPayPalOrder(plan: keyof typeof PAYPAL_PLANS, baseUrl
       "Content-Type": "application/json",
       "PayPal-Request-Id": crypto.randomUUID(),
     },
-    body: JSON.stringify({
-      intent: "CAPTURE",
-      purchase_units: [{
-        reference_id: crypto.randomUUID(),
-        description: `${name} — Monthly Subscription`,
-        amount: { currency_code: "USD", value: String(amount) },
-      }],
-      application_context: {
-        brand_name: "Seedance",
-        landing_page: "BILLING",
-        user_action: "PAY_NOW",
-        return_url: `${baseUrl}/settings?paypal=success`,
-        cancel_url: `${baseUrl}/pricing?paypal=cancelled`,
-      },
-    }),
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {

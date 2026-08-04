@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Loader2, Gift } from "lucide-react";
+import { Check, Loader2, Gift, CreditCard } from "lucide-react";
 
 const monthlyPlans = [
   {
@@ -38,7 +38,7 @@ const sharedFeatures = [
 export default function PricingPage() {
   const router = useRouter();
   const [annual, setAnnual] = useState(true);
-  const [paypalLoading, setPaypalLoading] = useState<string | null>(null);
+  const [loading, setLoading] = useState<string | null>(null);
   const [loggedIn, setLoggedIn] = useState(false);
 
   useEffect(() => {
@@ -49,26 +49,27 @@ export default function PricingPage() {
     ...p, price: Math.round(p.price * 12 * 0.7) / 12, originalPrice: p.price,
   }));
 
-  const handleSubscribe = (plan: string) => {
+  const requireLogin = () => {
     if (!loggedIn) {
       router.push(`/login?redirect=/pricing`);
-      return;
+      return true;
     }
-    checkoutPayPal(plan);
+    return false;
   };
 
-  const checkoutPayPal = async (plan: string) => {
-    setPaypalLoading(plan);
+  const checkout = async (plan: string, method: "paypal" | "card") => {
+    if (requireLogin()) return;
+    setLoading(`${method}:${plan}`);
     try {
       const res = await fetch("/api/billing/paypal/create", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ plan, method }),
       });
       const d = await res.json();
       if (d.approveUrl) window.location.href = d.approveUrl;
       else alert(d.error ?? "Checkout failed");
     } catch { alert("Checkout failed"); }
-    finally { setPaypalLoading(null); }
+    finally { setLoading(null); }
   };
 
   return (
@@ -137,13 +138,21 @@ export default function PricingPage() {
                 </div>
               )}
 
-              <button onClick={() => handleSubscribe(plan.key)} disabled={paypalLoading !== null}
-                className="mt-6 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#0070ba] text-sm font-medium text-white hover:bg-[#005ea6] transition-colors disabled:opacity-50">
-                {paypalLoading === plan.key ? <Loader2 className="h-4 w-4 animate-spin" /> : (
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797H8.323c-.577 0-1.05.423-1.135.995l-.603 3.82c-.072.452-.46.794-.916.794h-.008"/></svg>
-                )}
-                Subscribe Now →
-              </button>
+              {/* Payment buttons */}
+              <div className="mt-6 space-y-2">
+                <button onClick={() => checkout(plan.key, "card")} disabled={loading !== null}
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-violet-600 text-sm font-medium text-white hover:bg-violet-500 transition-colors disabled:opacity-50">
+                  {loading === `card:${plan.key}` ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+                  Pay with Card
+                </button>
+                <button onClick={() => checkout(plan.key, "paypal")} disabled={loading !== null}
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#0070ba] text-sm font-medium text-white hover:bg-[#005ea6] transition-colors disabled:opacity-50">
+                  {loading === `paypal:${plan.key}` ? <Loader2 className="h-4 w-4 animate-spin" /> : (
+                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797H8.323c-.577 0-1.05.423-1.135.995l-.603 3.82c-.072.452-.46.794-.916.794h-.008"/></svg>
+                  )}
+                  PayPal
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -155,8 +164,8 @@ export default function PricingPage() {
           </p>
           <div className="mt-4 flex justify-center gap-4">
             {creditPacks.map((pack) => (
-              <button key={pack.credits} onClick={() => handleSubscribe("ADVANCED")}
-                disabled={paypalLoading !== null}
+              <button key={pack.credits} onClick={() => checkout("ADVANCED", "card")}
+                disabled={loading !== null}
                 className="flex items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-900/50 px-6 py-4 hover:border-violet-500/30 transition-all disabled:opacity-50">
                 <span className="text-lg font-bold text-white">{pack.credits} Credits</span>
                 <span className="text-sm text-zinc-400">${pack.price} One-Time</span>
