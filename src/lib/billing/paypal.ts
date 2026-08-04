@@ -49,7 +49,7 @@ export async function createPayPalOrder(plan: keyof typeof PAYPAL_PLANS, baseUrl
       }],
       application_context: {
         brand_name: "Seedance",
-        landing_page: "NO_PREFERENCE",
+        landing_page: "BILLING",
         user_action: "PAY_NOW",
         return_url: `${baseUrl}/settings?paypal=success`,
         cancel_url: `${baseUrl}/pricing?paypal=cancelled`,
