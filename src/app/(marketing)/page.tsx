@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Play, Zap, Image, Video, Music, Users, Globe } from "lucide-react";
+import { HomepageJsonLd } from "@/components/seo/json-ld";
 
 const btnPrimary = "inline-flex shrink-0 items-center justify-center rounded-lg text-sm font-medium transition-all h-11 gap-2 px-6 text-base bg-violet-600 text-white hover:bg-violet-500 shadow-lg shadow-violet-500/25";
 const btnOutline = "inline-flex shrink-0 items-center justify-center rounded-lg text-sm font-medium transition-all h-11 gap-2 px-6 text-base border border-zinc-700 bg-transparent text-zinc-300 hover:bg-zinc-800 hover:text-white";
@@ -7,6 +8,7 @@ const btnOutline = "inline-flex shrink-0 items-center justify-center rounded-lg 
 export default function LandingPage() {
   return (
     <div className="overflow-hidden">
+      <HomepageJsonLd />
       <section className="relative pt-32 pb-20 sm:pt-40 sm:pb-32">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-violet-900/20 via-transparent to-transparent" />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
