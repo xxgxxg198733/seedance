@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { ImageIcon, Sparkles, Clock, X, Upload } from "lucide-react";
 import { useCredits } from "@/hooks/use-credits";
 
 export default function ImagePage() {
+  const router = useRouter();
   const { fetchCredits } = useCredits();
   const [prompt, setPrompt] = useState("");
   const [aspectRatio, setAspectRatio] = useState("1:1");
@@ -46,6 +48,10 @@ export default function ImagePage() {
         body: JSON.stringify({ prompt: prompt || "Generate a variation", modelId: "seedream-5", aspectRatio, resolution, referenceImages: refUrl ? [refUrl] : undefined }),
       });
       const data = await res.json();
+      if (res.status === 402) {
+        setError(`Insufficient credits — need ${data.required} but you have ${data.credits}. Upgrade to get thousands more credits.`);
+        return;
+      }
       if (!res.ok) throw new Error(data.error || "Generation failed");
       setResult(data.output?.url);
       if (data.credits_remaining !== undefined) fetchCredits();
@@ -141,7 +147,17 @@ export default function ImagePage() {
               className="w-full resize-none rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:border-violet-500/50 focus:outline-none" />
             <p className="text-right text-xs text-zinc-600">{prompt.length}/2000</p>
 
-            {error && <div className="rounded-xl border border-red-500/20 bg-red-950/30 p-3 text-sm text-red-400">{error}</div>}
+            {error && (
+              <div className="rounded-xl border border-red-500/20 bg-red-950/30 p-4">
+                <p className="text-sm text-red-400">{error}</p>
+                {error.includes("Insufficient credits") && (
+                  <button onClick={() => router.push("/pricing")}
+                    className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-lg bg-violet-600 px-4 text-sm font-medium text-white hover:bg-violet-500 transition-colors">
+                    ⚡ Upgrade Now — from $20.1/mo
+                  </button>
+                )}
+              </div>
+            )}
 
             <button onClick={handleGenerate} disabled={isLoading || uploading || (!prompt.trim() && !refImage)}
               className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-6 text-base font-medium text-white hover:bg-violet-500 shadow-lg shadow-violet-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed">

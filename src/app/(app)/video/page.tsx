@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { Video, Sparkles, Clock, Monitor, Timer, Upload, X, Image, Plus } from "lucide-react";
 import { useCredits } from "@/hooks/use-credits";
 
@@ -11,6 +12,7 @@ const MODES = [
 ];
 
 export default function VideoPage() {
+  const router = useRouter();
   const { fetchCredits } = useCredits();
   const [mode, setMode] = useState("text-to-video");
   const [prompt, setPrompt] = useState("");
@@ -73,6 +75,10 @@ export default function VideoPage() {
         }),
       });
       const data = await res.json();
+      if (res.status === 402) {
+        setError(`Insufficient credits — need ${data.required} but you have ${data.credits}. Upgrade to get 36,000+ credits.`);
+        return;
+      }
       if (!res.ok) throw new Error(data.error || "Generation failed");
       setResult(data.output?.url);
       if (data.credits_remaining !== undefined) fetchCredits();
@@ -209,7 +215,17 @@ export default function VideoPage() {
               className="w-full resize-none rounded-2xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:border-violet-500/50 focus:outline-none" />
             <p className="text-right text-xs text-zinc-600">{prompt.length}/2000</p>
 
-            {error && <div className="rounded-xl border border-red-500/20 bg-red-950/30 p-3 text-sm text-red-400">{error}</div>}
+            {error && (
+              <div className="rounded-xl border border-red-500/20 bg-red-950/30 p-4">
+                <p className="text-sm text-red-400">{error}</p>
+                {error.includes("Insufficient credits") && (
+                  <button onClick={() => router.push("/pricing")}
+                    className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-lg bg-violet-600 px-4 text-sm font-medium text-white hover:bg-violet-500 transition-colors">
+                    ⚡ Upgrade Now — from $20.1/mo
+                  </button>
+                )}
+              </div>
+            )}
 
             <button onClick={handleGenerate} disabled={busy || (mode === "text-to-video" ? !prompt.trim() : refImages.length === 0)}
               className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-6 text-base font-medium text-white hover:bg-violet-500 shadow-lg shadow-violet-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
