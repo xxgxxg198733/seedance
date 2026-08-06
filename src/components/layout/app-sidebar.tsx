@@ -48,7 +48,13 @@ export function AppSidebar() {
         })}
       </nav>
       {!sidebarCollapsed && (
-        <div className="border-t border-zinc-800 p-3">
+        <div className="border-t border-zinc-800 p-3 space-y-2">
+          {user && user.plan === "FREE" && (
+            <Link href="/pricing" className="block rounded-lg bg-gradient-to-r from-violet-600/20 to-purple-600/20 border border-violet-500/30 p-3 hover:border-violet-500/50 transition-all">
+              <p className="text-xs font-medium text-violet-300">⚡ Upgrade to Pro</p>
+              <p className="text-[10px] text-zinc-500 mt-0.5">Get 36,000+ credits from $20.1/mo</p>
+            </Link>
+          )}
           {user ? (
             <div className="flex items-center gap-3 rounded-lg px-3 py-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-600/30 text-xs font-medium text-violet-300">{user.name?.[0]?.toUpperCase() ?? "U"}</div>
