@@ -251,11 +251,11 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <p className="text-sm text-zinc-600">&copy; 2026 Seedance — AI Video Generator & Creative Suite. All rights reserved.</p>
-            <div className="flex gap-6">
+            <div className="flex items-center gap-6">
+              <a href="https://toolchase.com" target="_blank" rel="noopener" className="text-sm text-zinc-600 hover:text-zinc-400">Listed on ToolChase</a>
               <Link href="/pricing" className="text-sm text-zinc-600 hover:text-zinc-400">Pricing</Link>
               <Link href="#" className="text-sm text-zinc-600 hover:text-zinc-400">Terms</Link>
               <Link href="#" className="text-sm text-zinc-600 hover:text-zinc-400">Privacy</Link>
-              <Link href="#" className="text-sm text-zinc-600 hover:text-zinc-400">Blog</Link>
             </div>
           </div>
         </div>
