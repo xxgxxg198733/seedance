@@ -1,15 +1,8 @@
 import { NextResponse } from "next/server";
 import { compare } from "bcryptjs";
 import { signToken } from "@/lib/auth/jwt";
-
-// Simple in-memory user store for email/password users
-// In production, use a real database
-const DEMO_USER = {
-  email: "demo@seedance.ai",
-  // bcrypt hash of "demo123"
-  password: "$2a$10$placeholder",
-  name: "Demo User",
-};
+import { prisma } from "@/lib/db/prisma";
+import crypto from "crypto";
 
 export async function POST(request: Request) {
   try {
@@ -18,16 +11,37 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Email and password required" }, { status: 400 });
     }
 
-    // For now, accept any email/password combo for demo purposes
-    // Real DB integration will come when we set up a proper database
-    const token = await signToken({ userId: `email-${email}`, email });
+    // Find user in DB
+    let user = await prisma.user.findUnique({ where: { email } });
+
+    if (user && user.password) {
+      // Verify password
+      const valid = await compare(password, user.password);
+      if (!valid) {
+        return NextResponse.json({ error: "Invalid password" }, { status: 401 });
+      }
+    } else if (!user) {
+      // Auto-create account for new email/password combos
+      user = await prisma.user.create({
+        data: {
+          clerkId: `email-${email}`,
+          email,
+          name: email.split("@")[0],
+          credits: 20,
+          plan: "FREE",
+          referralCode: crypto.randomBytes(4).toString("hex"),
+        },
+      });
+    }
+
+    const token = await signToken({ userId: user.id, email });
 
     const userInfo = Buffer.from(JSON.stringify({
-      name: email.split("@")[0],
-      email,
+      name: user.name ?? email.split("@")[0],
+      email: user.email,
     })).toString("base64");
 
-    const res = NextResponse.json({ success: true, email });
+    const res = NextResponse.json({ success: true, email: user.email });
     res.cookies.set("token", token, {
       httpOnly: true, secure: true, sameSite: "lax",
       maxAge: 604800, path: "/",

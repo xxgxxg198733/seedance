@@ -1,14 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Settings, User, CreditCard, Bell, Zap, ExternalLink } from "lucide-react";
+import { Settings, User, CreditCard, Gift, Copy, Check, Bell, Zap, ExternalLink } from "lucide-react";
 
 export default function SettingsPage() {
   const [billing, setBilling] = useState<{ credits: number; plan: string }>({ credits: 20, plan: "FREE" });
+  const [referral, setReferral] = useState<{ referralCode: string; referralLink: string; referralCount: number; referralCredits: number } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     fetch("/api/credits").then(r => r.json()).then(setBilling).catch(() => {});
+    fetch("/api/referral").then(r => r.json()).then(d => { if (!d.error) setReferral(d); }).catch(() => {});
   }, []);
+
+  const copyLink = () => {
+    if (referral) {
+      navigator.clipboard.writeText(referral.referralLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   const checkout = async (plan: string) => {
     const res = await fetch("/api/billing/checkout", {
@@ -86,6 +97,31 @@ export default function SettingsPage() {
           </h2>
           <p className="text-sm text-zinc-500">Configure email notifications for generation completion, billing updates, and product news.</p>
         </section>
+
+        {/* Referral Program */}
+        {referral && (
+          <section className="rounded-2xl border border-violet-500/20 bg-violet-950/10 p-6">
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-4">
+              <Gift className="h-4 w-4 text-violet-400" /> Referral Program
+            </h2>
+            <p className="text-sm text-zinc-400 mb-4">
+              Share your link — when someone signs up, you both get <span className="text-violet-400 font-semibold">+20 free credits</span>.
+            </p>
+            <div className="flex items-center gap-2 mb-4">
+              <input readOnly value={referral.referralLink}
+                className="flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-zinc-300 focus:outline-none" />
+              <button onClick={copyLink}
+                className="flex h-9 items-center gap-1.5 rounded-lg bg-violet-600 px-3 text-xs font-medium text-white hover:bg-violet-500 transition-colors">
+                {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                {copied ? "Copied!" : "Copy"}
+              </button>
+            </div>
+            <div className="flex gap-6 text-xs text-zinc-500">
+              <span>👥 {referral.referralCount} referred</span>
+              <span>💰 +{referral.referralCredits} credits earned</span>
+            </div>
+          </section>
+        )}
 
         {/* Stripe Portal */}
         <div className="pt-4 border-t border-zinc-800">

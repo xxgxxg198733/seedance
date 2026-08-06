@@ -17,14 +17,16 @@ export default function RegisterPage() {
     setError("");
 
     try {
+      const params = new URLSearchParams(window.location.search);
+      const referralCode = params.get("ref") ?? undefined;
+
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, referralCode }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      const params = new URLSearchParams(window.location.search);
       window.location.href = params.get("redirect") ?? "/agent";
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");

@@ -12,15 +12,26 @@ export async function GET() {
     const payload = await verifyToken(token);
     if (!payload) return NextResponse.json({ user: null }, { status: 401 });
 
-    // Try DB first, fallback to JWT payload (for Google OAuth)
+    // Try DB first
     try {
       const dbUser = await prisma.user.findUnique({
         where: { id: payload.userId },
-        select: { id: true, email: true, name: true, credits: true, plan: true },
+        select: { id: true, email: true, name: true, credits: true, plan: true, referralCode: true },
       });
       if (dbUser) return NextResponse.json({ user: dbUser });
     } catch {
-      // DB not available — use JWT payload
+      // DB not available — try by email
+    }
+
+    // Fallback: look up by email
+    try {
+      const dbUser = await prisma.user.findUnique({
+        where: { email: payload.email },
+        select: { id: true, email: true, name: true, credits: true, plan: true, referralCode: true },
+      });
+      if (dbUser) return NextResponse.json({ user: dbUser });
+    } catch {
+      // DB not available
     }
 
     // Google OAuth: construct user from JWT
