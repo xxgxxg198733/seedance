@@ -99,6 +99,20 @@ export default function VideoPage() {
           <p className="text-xs text-zinc-500 mt-1">Multi-ref input · 1080p · AI voiceover · 5-15s</p>
         </div>
 
+        <div className="rounded-xl border border-zinc-700 bg-zinc-900/50 p-3">
+          <p className="text-xs text-zinc-400">Credits per generation</p>
+          <div className="mt-1.5 space-y-1">
+            <div className="flex justify-between text-xs">
+              <span className="text-zinc-500">720p / 5s</span>
+              <span className="text-violet-400 font-medium">20 credits</span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span className="text-zinc-500">1080p / 10s</span>
+              <span className="text-violet-400 font-medium">45 credits</span>
+            </div>
+          </div>
+        </div>
+
         <div>
           <label className="text-sm font-medium text-zinc-400 flex items-center gap-1.5">
             <Monitor className="h-3.5 w-3.5" /> Ratio

@@ -51,8 +51,11 @@ export default function PricingPage() {
     <div className="pt-24 pb-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-950/30 px-4 py-1.5 text-sm text-amber-400 mb-6">
+            🔥 Launch Special — First month 10% off all plans. Limited time offer.
+          </div>
           <h1 className="text-4xl font-bold text-white sm:text-5xl">Simple, transparent pricing</h1>
-          <p className="mt-4 text-lg text-zinc-400">Choose the plan that fits your creative needs.</p>
+          <p className="mt-4 text-lg text-zinc-400">Choose the plan that fits your creative needs. All plans include full commercial license.</p>
         </div>
 
         {/* Plans */}

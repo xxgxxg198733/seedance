@@ -69,6 +69,20 @@ export default function ImagePage() {
           <p className="text-xs text-zinc-500 mt-1">Doubao · 2K cinematic quality</p>
         </div>
 
+        <div className="rounded-xl border border-zinc-700 bg-zinc-900/50 p-3">
+          <p className="text-xs text-zinc-400">Credits per generation</p>
+          <div className="mt-1.5 space-y-1">
+            <div className="flex justify-between text-xs">
+              <span className="text-zinc-500">1024×1024</span>
+              <span className="text-violet-400 font-medium">3 credits</span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span className="text-zinc-500">2K Resolution</span>
+              <span className="text-violet-400 font-medium">5 credits</span>
+            </div>
+          </div>
+        </div>
+
         <div>
           <label className="text-sm font-medium text-zinc-400">Aspect Ratio</label>
           <div className="mt-1.5 grid grid-cols-3 gap-1 rounded-lg bg-zinc-900 p-1">
